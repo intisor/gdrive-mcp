@@ -1,16 +1,29 @@
-# Google Drive MCP Web App
+# MCP Google Drive Integration App
 
-A web application that uses the `@isaacphi/mcp-gdrive` MCP server to interact with Google Drive in the background.
+A comprehensive web application that provides intelligent Google Drive management through the Model Context Protocol (MCP), featuring AI-powered chat assistance for file operations.
 
-## Features
+## 🚀 Features
 
-- 📁 Browse Google Drive files and folders
-- 🔍 Search files by name or content
-- ⬆️ Upload files to Google Drive
-- ⬇️ Download files from Google Drive
-- 📂 Create new folders
-- 🗑️ Delete files and folders
-- 🔄 Real-time status monitoring of MCP server connection
+### Core File Management
+- 📁 **Smart File Browser** - Browse and navigate Google Drive with an intuitive interface
+- 🔍 **Advanced Search** - Search files by name, content, and metadata
+- ⬆️ **File Upload** - Drag-and-drop file uploads to Google Drive
+- ⬇️ **File Download** - Download files directly from Google Drive
+- 📂 **Folder Management** - Create and organize folders
+- 🗑️ **File Operations** - Delete and manage files safely
+
+### AI-Powered Assistant
+- 💬 **Chat Interface** - Natural language commands for file operations
+- 📊 **June Reports Analysis** - Specialized functionality for analyzing June reports
+- 🤖 **Smart Suggestions** - AI-powered quick prompts for common tasks
+- � **Content Preview** - Preview and analyze document contents
+- �🔄 **Real-time MCP Connection** - Monitor server status with fallback modes
+
+### Advanced Capabilities
+- 🔐 **Secure Authentication** - Google OAuth2 integration
+- 🌐 **Modern UI** - Responsive web interface with Bootstrap
+- 📱 **Mobile Friendly** - Works on desktop and mobile devices
+- ⚡ **Fast Performance** - Optimized for quick file operations
 
 ## Architecture
 
@@ -153,6 +166,65 @@ mcp-gdrive-webapp/
 - Verify the MCP server process is running
 
 ### Upload/Download Issues
+- Check file permissions and Google Drive quotas
+- Ensure proper authentication tokens
+- Verify file paths and temporary directories exist
+
+## 🚀 Deployment Options
+
+### Free Deployment Platforms
+
+#### 1. **Replit** (Recommended for small groups)
+- Zero setup, deploy directly from GitHub
+- Free tier perfect for 10 users
+- Built-in environment variable management
+- Auto-restarts when inactive
+
+#### 2. **Google Cloud Run** (Best for Google Drive integration)
+- Generous free tier (2M requests/month)
+- Excellent for Google services integration
+- Auto-scaling and HTTPS included
+- Pay only when used
+
+#### 3. **Railway**
+- 500 hours/month free
+- Easy GitHub integration
+- Automatic HTTPS and SSL
+
+#### 4. **Cyclic.sh**
+- No sleep/cold start issues
+- Simple GitHub deployment
+- AWS-powered reliability
+
+### Frontend Deployment
+- **Netlify** or **Vercel** for static frontend
+- Connect to your deployed MCP server via API
+
+### Environment Variables for Deployment
+```bash
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_REDIRECT_URI=your_redirect_uri
+PORT=8080
+```
+
+## 📄 License
+
+MIT License - feel free to use this project for personal or commercial purposes.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📞 Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Check the troubleshooting section above
+- Review the MCP server documentation
 - Check file permissions in the `uploads/` and `downloads/` directories
 - Ensure sufficient disk space
 - Verify Google Drive API quotas
