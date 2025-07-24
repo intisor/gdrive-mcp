@@ -1,5 +1,6 @@
 run = "npm start"
-language = "nodejs"
+entrypoint = "server.js"
+modules = ["nodejs-20"]
 
 [packager]
 language = "nodejs"
@@ -10,16 +11,19 @@ guessImports = true
 enabledForHosting = false
 
 [languages.javascript]
-pattern = "**/{*.js,*.jsx,*.ts,*.tsx,*.json}"
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
 
 [languages.javascript.languageServer]
 start = "typescript-language-server --stdio"
+
+[nix]
+channel = "stable-23_11"
 
 [env]
 NODE_ENV = "production"
 
 [gitHubImport]
-requiredFiles = [".replit", "replit.nix", ".config"]
+requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
-run = ["sh", "-c", "npm start"]
+run = ["npm", "start"]
