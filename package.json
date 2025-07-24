@@ -9,7 +9,9 @@
     "dev": "nodemon server.js",
     "test": "node test-mcp.js",
     "test-mcp": "node test-mcp-connection.js",
-    "mcp-server": "node mcp-server.js"
+    "mcp-server": "node mcp-server.js",
+    "build": "echo 'No build step required for Node.js'",
+    "deploy": "gcloud run deploy mcp-gdrive --source . --region=us-central1 --allow-unauthenticated"
   },
   "dependencies": {
     "express": "^4.18.2",

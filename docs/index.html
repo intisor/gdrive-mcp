@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Google Drive Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .api-endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #28a745; }
+        .status-offline { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-cloud"></i> MCP Google Drive Manager
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span id="connectionStatus" class="navbar-text">
+                    <span class="status-indicator status-offline"></span>
+                    Connecting...
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-cog"></i> API Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="apiEndpoint" class="form-label">Backend API Endpoint:</label>
+                            <input type="url" class="form-control" id="apiEndpoint" 
+                                   placeholder="https://your-service-name.run.app"
+                                   value="">
+                            <div class="form-text">Enter your Google Cloud Run service URL</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="connectToAPI()">
+                            <i class="fas fa-link"></i> Connect to Backend
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-comments"></i> Chat Interface</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="chatMessages" style="height: 400px; overflow-y: auto; border: 1px solid #dee2e6; padding: 10px; margin-bottom: 10px;">
+                            <div class="text-muted">Connect to your backend API to start chatting...</div>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="messageInput" placeholder="Ask about your Google Drive files..." disabled>
+                            <button class="btn btn-primary" onclick="sendMessage()" disabled>
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-rocket"></i> Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="quickAction('list recent files')">
+                                <i class="fas fa-clock"></i> Recent Files
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="quickAction('show shared files')">
+                                <i class="fas fa-share-alt"></i> Shared Files
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="quickAction('analyze june reports')">
+                                <i class="fas fa-chart-bar"></i> June Reports
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="quickAction('storage analysis')">
+                                <i class="fas fa-chart-pie"></i> Storage Info
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle"></i> Setup Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="api-endpoint">
+                            <strong>Step 1:</strong> Deploy your backend to Google Cloud Run<br>
+                            <code>gcloud run deploy mcp-gdrive --source .</code>
+                        </div>
+                        <div class="api-endpoint">
+                            <strong>Step 2:</strong> Copy the service URL and paste it above
+                        </div>
+                        <div class="api-endpoint">
+                            <strong>Step 3:</strong> Update your Google OAuth redirect URI to include both:
+                            <br>• <code>https://your-service.run.app/auth/google/callback</code>
+                            <br>• <code>https://intisor.github.io/gdrive-mcp</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiEndpoint = '';
+        let isConnected = false;
+
+        function connectToAPI() {
+            const endpoint = document.getElementById('apiEndpoint').value;
+            if (!endpoint) {
+                alert('Please enter your API endpoint');
+                return;
+            }
+            
+            apiEndpoint = endpoint;
+            localStorage.setItem('mcp-api-endpoint', endpoint);
+            
+            // Test connection
+            fetch(endpoint + '/api/health')
+                .then(response => response.json())
+                .then(data => {
+                    isConnected = true;
+                    updateConnectionStatus('Connected to ' + endpoint, true);
+                    enableChat();
+                })
+                .catch(error => {
+                    isConnected = false;
+                    updateConnectionStatus('Failed to connect', false);
+                    console.error('Connection failed:', error);
+                });
+        }
+
+        function updateConnectionStatus(message, connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.innerHTML = `
+                <span class="status-indicator status-${connected ? 'online' : 'offline'}"></span>
+                ${message}
+            `;
+        }
+
+        function enableChat() {
+            document.getElementById('messageInput').disabled = false;
+            document.querySelector('button[onclick="sendMessage()"]').disabled = false;
+            addMessage('system', 'Connected! You can now chat with your Google Drive assistant.');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || !isConnected) return;
+
+            addMessage('user', message);
+            input.value = '';
+
+            // Send to API
+            fetch(apiEndpoint + '/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, userId: 'web-user' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage('assistant', data.content);
+            })
+            .catch(error => {
+                addMessage('error', 'Error: ' + error.message);
+            });
+        }
+
+        function quickAction(action) {
+            if (!isConnected) {
+                alert('Please connect to your backend API first');
+                return;
+            }
+            document.getElementById('messageInput').value = action;
+            sendMessage();
+        }
+
+        function addMessage(role, content) {
+            const messagesEl = document.getElementById('chatMessages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `mb-2 ${role}`;
+            
+            let icon = '';
+            let className = '';
+            switch(role) {
+                case 'user': icon = 'fas fa-user'; className = 'text-primary'; break;
+                case 'assistant': icon = 'fas fa-robot'; className = 'text-success'; break;
+                case 'system': icon = 'fas fa-info-circle'; className = 'text-info'; break;
+                case 'error': icon = 'fas fa-exclamation-triangle'; className = 'text-danger'; break;
+            }
+            
+            messageEl.innerHTML = `
+                <div class="${className}">
+                    <i class="${icon}"></i> <strong>${role.charAt(0).toUpperCase() + role.slice(1)}:</strong>
+                </div>
+                <div class="ms-3">${content}</div>
+            `;
+            
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        // Load saved endpoint
+        window.onload = function() {
+            const saved = localStorage.getItem('mcp-api-endpoint');
+            if (saved) {
+                document.getElementById('apiEndpoint').value = saved;
+            }
+        };
+
+        // Enter key support
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -23,8 +23,13 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: [
+      "http://localhost:3000",
+      "https://intisor.github.io",
+      process.env.FRONTEND_URL || 'https://intisor.github.io'
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -36,7 +41,11 @@ const chatService = new ChatService();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    'https://intisor.github.io',
+    process.env.FRONTEND_URL || 'https://intisor.github.io'
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -136,6 +145,17 @@ app.get('/auth/me', verifyToken, (req, res) => {
       name: req.user.name,
       picture: req.user.picture
     }
+  });
+});
+
+// Health check endpoint for Cloud Run
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    mcpConnected: mcpClient.isConnected(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
