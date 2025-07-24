@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MCP Google Drive Integration App
 
 A comprehensive web application that provides intelligent Google Drive management through the Model Context Protocol (MCP), featuring AI-powered chat assistance for file operations.
@@ -236,4 +237,18 @@ For issues and questions:
 
 ## License
 
-MIT License - feel free to modify and distribute as needed.
+MIT License - feel free to use this project for personal or commercial purposes.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📞 Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Check the troubleshooting section above
+- Review the MCP server documentation
