@@ -1,0 +1,19 @@
+{
+  "name": "mcp-gdrive-app",
+  "description": "AI-powered Google Drive management app using Model Context Protocol",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "replit": {
+    "run": "npm start",
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
+}
