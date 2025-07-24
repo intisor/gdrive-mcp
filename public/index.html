@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Google Drive MCP App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 300px;
+            color: white;
+            padding: 0;
+            z-index: 1000;
+        }
+        .main-content {
+            margin-left: 300px;
+            padding: 20px;
+        }
+        .chat-container {
+            height: calc(100vh - 120px);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        .message.user {
+            background: rgba(255, 255, 255, 0.2);
+            margin-left: auto;
+        }
+        .message.assistant {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .quick-prompts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .quick-prompt {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .quick-prompt:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        .chat-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 25px;
+            padding: 12px 20px;
+        }
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .chat-send-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .user-profile {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .file-manager {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .file-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        .file-item:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+        }
+        .loading {
+            display: none;
+        }
+        .toolbar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Status Indicator -->
+    <div class="status-indicator">
+        <div class="alert alert-info" id="statusAlert">
+            <i class="fas fa-spinner fa-spin"></i> Checking connection...
+        </div>
+    </div>
+
+    <!-- Sidebar with Chat -->
+    <div class="sidebar">
+        <div class="user-profile" id="userProfile">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                <span>Loading...</span>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <h5 class="mb-3">
+                <i class="fas fa-robot me-2"></i>
+                AI Assistant
+            </h5>
+
+            <!-- Quick Prompts -->
+            <div class="quick-prompts" id="quickPrompts">
+                <!-- Quick prompts will be loaded here -->
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-robot me-2"></i>
+                        <strong>AI Assistant</strong>
+                    </div>
+                    <div>Hello! I'm your Google Drive assistant. I can help you manage files, search for documents, organize folders, and much more. Try asking me something like "show me my recent files" or use one of the quick prompts above!</div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-group">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Ask me anything about your Google Drive...">
+                <button class="chat-send-btn" id="chatSendBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fab fa-google-drive text-primary me-2"></i>
+                    Google Drive Manager
+                </h1>
+                <p class="text-muted mb-0">Manage your files with AI assistance</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-danger" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <!-- Search -->
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search files...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchBtn" title="Search files">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <!-- Upload -->
+                    <div class="input-group">
+                        <input type="file" class="form-control" id="fileInput" title="Select file to upload">
+                        <button class="btn btn-primary" type="button" id="uploadBtn">
+                            <i class="fas fa-upload me-1"></i> Upload
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <!-- Folder Creation -->
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="folderNameInput" placeholder="New folder name...">
+                        <button class="btn btn-success" type="button" id="createFolderBtn">
+                            <i class="fas fa-folder-plus me-1"></i> Create
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <button class="btn btn-secondary btn-sm" id="refreshBtn">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                    </button>
+                    <button class="btn btn-info btn-sm" id="toggleSidebar" style="display: none;">
+                        <i class="fas fa-comment me-1"></i> Chat
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="text-center loading" id="loadingIndicator">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading files...</p>
+        </div>
+
+        <!-- File Manager -->
+        <div class="file-manager">
+            <h3 class="mb-3">Files and Folders</h3>
+            <div id="filesList"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <script>
+        class EnhancedGDriveApp {
+            constructor() {
+                this.currentFolderId = 'root';
+                this.user = null;
+                this.socket = null;
+                this.init();
+            }
+
+            async init() {
+                await this.checkAuth();
+                this.bindEvents();
+                this.initializeSocket();
+                this.loadQuickPrompts();
+                this.checkServerStatus();
+                this.loadFiles();
+            }
+
+            async checkAuth() {
+                try {
+                    const response = await fetch('/auth/me', {
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    this.user = data.user;
+                    this.updateUserProfile();
+                } catch (error) {
+                    console.error('Auth check failed:', error);
+                    window.location.href = '/login';
+                }
+            }
+
+            updateUserProfile() {
+                const profileDiv = document.getElementById('userProfile');
+                profileDiv.innerHTML = `
+                    <img src="${this.user.picture}" alt="Profile" class="user-avatar">
+                    <div>
+                        <strong>${this.user.name}</strong>
+                        <div class="small text-light">${this.user.email}</div>
+                    </div>
+                `;
+            }
+
+            initializeSocket() {
+                this.socket = io();
+                
+                this.socket.on('connect', () => {
+                    console.log('Connected to chat server');
+                    this.socket.emit('join_chat', this.user);
+                });
+
+                this.socket.on('chat_response', (data) => {
+                    this.addChatMessage('assistant', data.message.content, data.message.type);
+                });
+
+                this.socket.on('chat_error', (data) => {
+                    this.addChatMessage('assistant', `Error: ${data.error}`, 'error');
+                });
+            }
+
+            async loadQuickPrompts() {
+                try {
+                    const response = await fetch('/api/chat/prompts', {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    const promptsContainer = document.getElementById('quickPrompts');
+                    promptsContainer.innerHTML = data.prompts.map(prompt => `
+                        <button class="quick-prompt" onclick="app.sendQuickPrompt('${prompt.prompt}')">
+                            <i class="${prompt.icon} me-1"></i>
+                            ${prompt.title}
+                        </button>
+                    `).join('');
+                } catch (error) {
+                    console.error('Failed to load quick prompts:', error);
+                }
+            }
+
+            sendQuickPrompt(prompt) {
+                this.sendChatMessage(prompt);
+            }
+
+            bindEvents() {
+                // File management events
+                document.getElementById('uploadBtn').addEventListener('click', () => this.uploadFile());
+                document.getElementById('searchBtn').addEventListener('click', () => this.searchFiles());
+                document.getElementById('createFolderBtn').addEventListener('click', () => this.createFolder());
+                document.getElementById('refreshBtn').addEventListener('click', () => this.loadFiles());
+                
+                // Chat events
+                document.getElementById('chatSendBtn').addEventListener('click', () => this.sendChatMessage());
+                document.getElementById('chatInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendChatMessage();
+                    }
+                });
+
+                // Search on Enter key
+                document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.searchFiles();
+                    }
+                });
+
+                // Responsive sidebar toggle
+                const toggleBtn = document.getElementById('toggleSidebar');
+                if (window.innerWidth <= 768) {
+                    toggleBtn.style.display = 'inline-block';
+                    toggleBtn.addEventListener('click', () => {
+                        document.querySelector('.sidebar').classList.toggle('show');
+                    });
+                }
+            }
+
+            sendChatMessage(message = null) {
+                const input = document.getElementById('chatInput');
+                const messageText = message || input.value.trim();
+                
+                if (!messageText) return;
+
+                // Add user message to chat
+                this.addChatMessage('user', messageText);
+                
+                // Send to server via socket
+                this.socket.emit('chat_message', {
+                    message: messageText,
+                    userId: this.user.id
+                });
+
+                // Clear input
+                if (!message) {
+                    input.value = '';
+                }
+            }
+
+            addChatMessage(role, content, type = 'text') {
+                const messagesContainer = document.getElementById('chatMessages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${role}`;
+                
+                const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                let iconClass = role === 'user' ? 'fas fa-user' : 'fas fa-robot';
+                let userName = role === 'user' ? this.user.name : 'AI Assistant';
+                
+                messageDiv.innerHTML = `
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="${iconClass} me-2"></i>
+                        <strong>${userName}</strong>
+                        <small class="ms-auto opacity-75">${time}</small>
+                    </div>
+                    <div>${this.formatChatMessage(content, type)}</div>
+                `;
+                
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            formatChatMessage(content, type) {
+                if (type === 'error') {
+                    return `<div class="text-danger">${content}</div>`;
+                }
+                
+                // Convert markdown-like formatting to HTML
+                return content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/• /g, '&bull; ');
+            }
+
+            async checkServerStatus() {
+                try {
+                    const response = await fetch('/api/health', {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    const statusAlert = document.getElementById('statusAlert');
+                    if (data.mcpConnected) {
+                        statusAlert.className = 'alert alert-success';
+                        statusAlert.innerHTML = `<i class="fas fa-check-circle"></i> Connected - ${data.user}`;
+                    } else {
+                        statusAlert.className = 'alert alert-warning';
+                        statusAlert.innerHTML = '<i class="fas fa-exclamation-triangle"></i> MCP Server Disconnected';
+                    }
+                } catch (error) {
+                    const statusAlert = document.getElementById('statusAlert');
+                    statusAlert.className = 'alert alert-danger';
+                    statusAlert.innerHTML = '<i class="fas fa-times-circle"></i> Server Error';
+                }
+            }
+
+            showLoading(show = true) {
+                const indicator = document.getElementById('loadingIndicator');
+                indicator.style.display = show ? 'block' : 'none';
+            }
+
+            async loadFiles(folderId = 'root') {
+                this.showLoading(true);
+                try {
+                    const response = await fetch(`/api/files?folderId=${folderId}&maxResults=50`, {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.content && Array.isArray(data.content)) {
+                        this.renderFiles(data.content);
+                    } else if (data.error) {
+                        this.showError('Error loading files: ' + data.error);
+                    }
+                } catch (error) {
+                    this.showError('Failed to load files: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            renderFiles(files) {
+                const filesList = document.getElementById('filesList');
+                filesList.innerHTML = '';
+
+                if (files.length === 0) {
+                    filesList.innerHTML = '<p class="text-muted text-center">No files found</p>';
+                    return;
+                }
+
+                files.forEach(file => {
+                    const fileItem = this.createFileItem(file);
+                    filesList.appendChild(fileItem);
+                });
+            }
+
+            createFileItem(file) {
+                const div = document.createElement('div');
+                div.className = 'file-item d-flex align-items-center';
+                
+                const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                const icon = isFolder ? 'fas fa-folder text-warning' : this.getFileIcon(file.mimeType);
+                
+                div.innerHTML = `
+                    <div class="me-3">
+                        <i class="${icon}" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${file.name}</h6>
+                        <small class="text-muted">
+                            ${isFolder ? 'Folder' : this.formatFileSize(file.size)} • 
+                            Modified: ${new Date(file.modifiedTime).toLocaleDateString()}
+                        </small>
+                    </div>
+                    <div class="btn-group">
+                        ${isFolder ? `
+                            <button class="btn btn-sm btn-outline-primary" onclick="app.openFolder('${file.id}')">
+                                <i class="fas fa-folder-open"></i> Open
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-outline-info" onclick="app.downloadFile('${file.id}', '${file.name}')">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        `}
+                        <button class="btn btn-sm btn-outline-danger" onclick="app.deleteFile('${file.id}', '${file.name}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                `;
+                
+                return div;
+            }
+
+            getFileIcon(mimeType) {
+                if (mimeType.includes('image')) return 'fas fa-image text-info';
+                if (mimeType.includes('video')) return 'fas fa-video text-danger';
+                if (mimeType.includes('audio')) return 'fas fa-music text-success';
+                if (mimeType.includes('pdf')) return 'fas fa-file-pdf text-danger';
+                if (mimeType.includes('document')) return 'fas fa-file-word text-primary';
+                if (mimeType.includes('spreadsheet')) return 'fas fa-file-excel text-success';
+                if (mimeType.includes('presentation')) return 'fas fa-file-powerpoint text-warning';
+                return 'fas fa-file text-secondary';
+            }
+
+            formatFileSize(bytes) {
+                if (!bytes) return 'Unknown size';
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            async uploadFile() {
+                const fileInput = document.getElementById('fileInput');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    this.showError('Please select a file to upload');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('parentFolderId', this.currentFolderId);
+
+                try {
+                    this.showLoading(true);
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include'
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        this.showError('Upload failed: ' + data.error);
+                    } else {
+                        this.showSuccess('File uploaded successfully!');
+                        fileInput.value = '';
+                        this.loadFiles(this.currentFolderId);
+                    }
+                } catch (error) {
+                    this.showError('Upload failed: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async searchFiles() {
+                const query = document.getElementById('searchInput').value.trim();
+                if (!query) return;
+
+                try {
+                    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&maxResults=20`, {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.content && Array.isArray(data.content)) {
+                        this.renderFiles(data.content);
+                        this.addChatMessage('assistant', `Found ${data.content.length} files matching "${query}"`);
+                    } else if (data.error) {
+                        this.showError('Search failed: ' + data.error);
+                    }
+                } catch (error) {
+                    this.showError('Search failed: ' + error.message);
+                }
+            }
+
+            async createFolder() {
+                const folderName = document.getElementById('folderNameInput').value.trim();
+                if (!folderName) {
+                    this.showError('Please enter a folder name');
+                    return;
+                }
+
+                try {
+                    this.showLoading(true);
+                    const response = await fetch('/api/folders', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            folderName: folderName,
+                            parentFolderId: this.currentFolderId
+                        }),
+                        credentials: 'include'
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        this.showError('Failed to create folder: ' + data.error);
+                    } else {
+                        this.showSuccess('Folder created successfully!');
+                        document.getElementById('folderNameInput').value = '';
+                        this.loadFiles(this.currentFolderId);
+                    }
+                } catch (error) {
+                    this.showError('Failed to create folder: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async downloadFile(fileId, fileName) {
+                try {
+                    this.showLoading(true);
+                    const response = await fetch(`/api/download/${fileId}`, {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        this.showError('Download failed: ' + data.error);
+                    } else {
+                        this.showSuccess(`File ${fileName} download initiated`);
+                    }
+                } catch (error) {
+                    this.showError('Download failed: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async deleteFile(fileId, fileName) {
+                if (!confirm(`Are you sure you want to delete "${fileName}"?`)) {
+                    return;
+                }
+
+                try {
+                    this.showLoading(true);
+                    const response = await fetch(`/api/files/${fileId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        this.showError('Delete failed: ' + data.error);
+                    } else {
+                        this.showSuccess('File deleted successfully!');
+                        this.loadFiles(this.currentFolderId);
+                    }
+                } catch (error) {
+                    this.showError('Delete failed: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            openFolder(folderId) {
+                this.currentFolderId = folderId;
+                this.loadFiles(folderId);
+            }
+
+            showError(message) {
+                this.showToast(message, 'danger');
+            }
+
+            showSuccess(message) {
+                this.showToast(message, 'success');
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                toast.style.cssText = 'top: 80px; right: 20px; z-index: 1001; min-width: 300px;';
+                toast.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(toast);
+
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Global functions
+        function logout() {
+            fetch('/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).then(() => {
+                window.location.href = '/login';
+            });
+        }
+
+        // Initialize the app
+        const app = new EnhancedGDriveApp();
+    </script>
+</body>
+</html>
