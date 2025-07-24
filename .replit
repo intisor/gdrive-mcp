@@ -1,19 +1,25 @@
-{
-  "name": "mcp-gdrive-app",
-  "description": "AI-powered Google Drive management app using Model Context Protocol",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  },
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "replit": {
-    "run": "npm start",
-    "env": {
-      "NODE_ENV": "production"
-    }
-  }
-}
+run = "npm start"
+language = "nodejs"
+
+[packager]
+language = "nodejs"
+
+[packager.features]
+packageSearch = true
+guessImports = true
+enabledForHosting = false
+
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx,*.json}"
+
+[languages.javascript.languageServer]
+start = "typescript-language-server --stdio"
+
+[env]
+NODE_ENV = "production"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix", ".config"]
+
+[deployment]
+run = ["sh", "-c", "npm start"]
