@@ -1,29 +1,33 @@
-run = "npm start"
-entrypoint = "server.js"
-modules = ["nodejs-20"]
-
-[packager]
-language = "nodejs"
-
-[packager.features]
-packageSearch = true
-guessImports = true
-enabledForHosting = false
-
-[languages.javascript]
-pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
-
-[languages.javascript.languageServer]
-start = "typescript-language-server --stdio"
-
-[nix]
-channel = "stable-23_11"
-
-[env]
-NODE_ENV = "production"
-
-[gitHubImport]
-requiredFiles = [".replit", "replit.nix"]
-
-[deployment]
-run = ["npm", "start"]
+{
+  "run": "npm start",
+  "entrypoint": "server.js",
+  "modules": ["nodejs-20"],
+  "packager": {
+	"language": "nodejs",
+	"features": {
+	  "packageSearch": true,
+	  "guessImports": true,
+	  "enabledForHosting": false
+	}
+  },
+  "languages": {
+	"javascript": {
+	  "pattern": "**/{*.js,*.jsx,*.ts,*.tsx}",
+	  "languageServer": {
+		"start": "typescript-language-server --stdio"
+	  }
+	}
+  },
+  "nix": {
+	"channel": "stable-23_11"
+  },
+  "env": {
+	"NODE_ENV": "production"
+  },
+  "gitHubImport": {
+	"requiredFiles": [".replit", "replit.nix"]
+  },
+  "deployment": {
+	"run": ["npm", "start"]
+  }
+}
