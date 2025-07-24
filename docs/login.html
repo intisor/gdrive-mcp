@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Google Drive MCP App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+            <!-- Logo and Header -->
+            <div class="text-center mb-8">
+                <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fab fa-google-drive text-3xl text-blue-600"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">Google Drive MCP</h1>
+                <p class="text-gray-600">AI-powered file management</p>
+            </div>
+
+            <!-- Login Button -->
+            <button onclick="loginWithGoogle()" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center space-x-3">
+                <i class="fab fa-google text-xl"></i>
+                <span>Sign in with Google</span>
+            </button>
+
+            <!-- Features -->
+            <div class="mt-8 space-y-3">
+                <h3 class="text-sm font-semibold text-gray-900 mb-4">What you can do:</h3>
+                
+                <div class="flex items-center space-x-3 text-sm text-gray-600">
+                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-file-alt text-blue-600 text-xs"></i>
+                    </div>
+                    <span>Count documents in June reports folder</span>
+                </div>
+                
+                <div class="flex items-center space-x-3 text-sm text-gray-600">
+                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-comments text-blue-600 text-xs"></i>
+                    </div>
+                    <span>Chat with AI to manage files</span>
+                </div>
+                
+                <div class="flex items-center space-x-3 text-sm text-gray-600">
+                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-search text-blue-600 text-xs"></i>
+                    </div>
+                    <span>Smart search and file discovery</span>
+                </div>
+                
+                <div class="flex items-center space-x-3 text-sm text-gray-600">
+                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-share-alt text-blue-600 text-xs"></i>
+                    </div>
+                    <span>Access shared files and folders</span>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-8 text-center">
+                <p class="text-xs text-gray-500">
+                    Powered by Model Context Protocol (MCP)<br>
+                    Secure Google OAuth authentication
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get backend URL from query parameter or localStorage
+        function getBackendURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const backendParam = urlParams.get('backend');
+            if (backendParam) {
+                localStorage.setItem('mcp-api-endpoint', backendParam);
+                return backendParam;
+            }
+            return localStorage.getItem('mcp-api-endpoint') || '';
+        }
+
+        function loginWithGoogle() {
+            const backendURL = getBackendURL();
+            if (!backendURL) {
+                alert('Backend URL not configured. Please go back to the main page and configure your Cloud Run endpoint.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Redirect to backend OAuth endpoint
+            window.location.href = backendURL + '/auth/google';
+        }
+
+        // Check if user is already logged in
+        async function checkAuth() {
+            const backendURL = getBackendURL();
+            if (!backendURL) return;
+            
+            try {
+                const response = await fetch(backendURL + '/auth/me', {
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                    window.location.href = 'dashboard.html?backend=' + encodeURIComponent(backendURL);
+                }
+            } catch (error) {
+                console.log('User not logged in:', error);
+                // User not logged in, stay on login page
+            }
+        }
+
+        // Show backend status
+        function showBackendStatus() {
+            const backendURL = getBackendURL();
+            if (backendURL) {
+                const hostname = new URL(backendURL).hostname;
+                const statusEl = document.createElement('div');
+                statusEl.className = 'mt-4 text-xs text-center text-gray-500';
+                statusEl.innerHTML = `
+                    <i class="fas fa-server mr-1"></i>
+                    Connected to: ${hostname}
+                `;
+                document.querySelector('.bg-white.rounded-2xl').appendChild(statusEl);
+            }
+        }
+
+        // Check auth and show status on page load
+        window.onload = function() {
+            checkAuth();
+            showBackendStatus();
+        };
+    </script>
+</body>
+</html>

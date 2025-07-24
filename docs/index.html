@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MCP Google Drive Manager</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .api-endpoint {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         .status-indicator {
             display: inline-block;
@@ -20,222 +17,411 @@
             border-radius: 50%;
             margin-right: 8px;
         }
-        .status-online { background-color: #28a745; }
-        .status-offline { background-color: #dc3545; }
+        .status-online { background-color: #10b981; }
+        .status-offline { background-color: #ef4444; }
     </style>
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-cloud"></i> MCP Google Drive Manager
-            </a>
-            <div class="navbar-nav ms-auto">
-                <span id="connectionStatus" class="navbar-text">
+<body class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="hero-gradient text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fab fa-google-drive text-2xl"></i>
+                    <h1 class="text-xl font-bold">MCP Google Drive Manager</h1>
+                </div>
+                <div id="connectionStatus" class="flex items-center">
                     <span class="status-indicator status-offline"></span>
-                    Connecting...
-                </span>
+                    <span class="text-sm">Not connected</span>
+                </div>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-cog"></i> API Configuration</h5>
+    <!-- Hero Section -->
+    <div class="hero-gradient text-white py-20">
+        <div class="max-w-4xl mx-auto text-center px-4">
+            <h2 class="text-4xl font-bold mb-6">AI-Powered Google Drive Management</h2>
+            <p class="text-xl mb-8 opacity-90">Connect your Cloud Run backend and start managing your Google Drive files with natural language</p>
+            
+            <!-- API Configuration Card -->
+            <div class="bg-white text-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
+                <h3 class="text-lg font-semibold mb-4 flex items-center justify-center">
+                    <i class="fas fa-cog mr-2"></i>Backend Configuration
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="apiEndpoint" class="block text-sm font-medium text-gray-700 mb-2">
+                            Google Cloud Run Service URL:
+                        </label>
+                        <input type="url" 
+                               id="apiEndpoint" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="https://mcp-gdrive-xxxxx-uc.a.run.app"
+                               value="">
+                        <p class="text-xs text-gray-500 mt-1">Enter your Google Cloud Run service URL</p>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="apiEndpoint" class="form-label">Backend API Endpoint:</label>
-                            <input type="url" class="form-control" id="apiEndpoint" 
-                                   placeholder="https://your-service-name.run.app"
-                                   value="">
-                            <div class="form-text">Enter your Google Cloud Run service URL</div>
-                        </div>
-                        <button class="btn btn-primary" onclick="connectToAPI()">
-                            <i class="fas fa-link"></i> Connect to Backend
-                        </button>
-                    </div>
-                </div>
-
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-comments"></i> Chat Interface</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="chatMessages" style="height: 400px; overflow-y: auto; border: 1px solid #dee2e6; padding: 10px; margin-bottom: 10px;">
-                            <div class="text-muted">Connect to your backend API to start chatting...</div>
-                        </div>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="messageInput" placeholder="Ask about your Google Drive files..." disabled>
-                            <button class="btn btn-primary" onclick="sendMessage()" disabled>
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-rocket"></i> Quick Actions</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary" onclick="quickAction('list recent files')">
-                                <i class="fas fa-clock"></i> Recent Files
-                            </button>
-                            <button class="btn btn-outline-primary" onclick="quickAction('show shared files')">
-                                <i class="fas fa-share-alt"></i> Shared Files
-                            </button>
-                            <button class="btn btn-outline-primary" onclick="quickAction('analyze june reports')">
-                                <i class="fas fa-chart-bar"></i> June Reports
-                            </button>
-                            <button class="btn btn-outline-primary" onclick="quickAction('storage analysis')">
-                                <i class="fas fa-chart-pie"></i> Storage Info
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-info-circle"></i> Setup Instructions</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="api-endpoint">
-                            <strong>Step 1:</strong> Deploy your backend to Google Cloud Run<br>
-                            <code>gcloud run deploy mcp-gdrive --source .</code>
-                        </div>
-                        <div class="api-endpoint">
-                            <strong>Step 2:</strong> Copy the service URL and paste it above
-                        </div>
-                        <div class="api-endpoint">
-                            <strong>Step 3:</strong> Update your Google OAuth redirect URI to include both:
-                            <br>• <code>https://your-service.run.app/auth/google/callback</code>
-                            <br>• <code>https://intisor.github.io/gdrive-mcp</code>
-                        </div>
-                    </div>
+                    <button onclick="connectToAPI()" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200">
+                        <i class="fas fa-link mr-2"></i>Connect to Backend
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-12">
+        <div class="grid md:grid-cols-2 gap-8">
+            
+            <!-- App Access -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-rocket text-blue-600 mr-3"></i>
+                    Access Your App
+                </h3>
+                <div class="space-y-4">
+                    <div id="appButtons" class="opacity-50">
+                        <a href="login.html" 
+                           class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-md text-center transition duration-200 mb-3 cursor-not-allowed">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Login to Google Drive
+                        </a>
+                        <a href="dashboard.html" 
+                           class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md text-center transition duration-200 cursor-not-allowed">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Open Dashboard
+                        </a>
+                    </div>
+                    <p id="connectionMessage" class="text-sm text-red-600">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Connect to your backend first to enable the app
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Test -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-flask text-purple-600 mr-3"></i>
+                    Quick Test
+                </h3>
+                <div class="space-y-3">
+                    <button onclick="testHealth()" 
+                            class="w-full p-3 bg-purple-100 hover:bg-purple-200 rounded-md text-sm transition duration-200 disabled:opacity-50"
+                            disabled>
+                        <i class="fas fa-heartbeat text-purple-600 mr-2"></i>
+                        Test Backend Health
+                    </button>
+                    <button onclick="testAuth()" 
+                            class="w-full p-3 bg-green-100 hover:bg-green-200 rounded-md text-sm transition duration-200 disabled:opacity-50"
+                            disabled>
+                        <i class="fas fa-shield-alt text-green-600 mr-2"></i>
+                        Test OAuth Setup
+                    </button>
+                    <div id="testResults" class="mt-4 p-3 bg-gray-50 rounded-md text-xs hidden">
+                        <!-- Test results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Instructions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h3 class="text-xl font-semibold mb-6 flex items-center">
+                <i class="fas fa-book text-indigo-600 mr-3"></i>
+                Deployment Guide
+            </h3>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="border-l-4 border-blue-500 pl-4">
+                    <h4 class="font-semibold text-blue-700 mb-2 flex items-center">
+                        <i class="fas fa-cloud mr-2"></i>Deploy Backend
+                    </h4>
+                    <div class="space-y-2">
+                        <code class="text-xs bg-gray-100 px-2 py-1 rounded block">
+                            gcloud auth login
+                        </code>
+                        <code class="text-xs bg-gray-100 px-2 py-1 rounded block">
+                            npm run deploy
+                        </code>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">Deploy to Google Cloud Run (FREE tier)</p>
+                </div>
+                
+                <div class="border-l-4 border-green-500 pl-4">
+                    <h4 class="font-semibold text-green-700 mb-2 flex items-center">
+                        <i class="fas fa-globe mr-2"></i>GitHub Pages
+                    </h4>
+                    <p class="text-sm text-gray-600">
+                        Enable GitHub Pages from your repo settings. 
+                        Use <code class="bg-gray-100 px-1 rounded">docs</code> folder as source.
+                    </p>
+                    <p class="text-xs text-green-600 mt-2">✅ Already configured!</p>
+                </div>
+                
+                <div class="border-l-4 border-orange-500 pl-4">
+                    <h4 class="font-semibold text-orange-700 mb-2 flex items-center">
+                        <i class="fas fa-key mr-2"></i>OAuth Setup
+                    </h4>
+                    <p class="text-sm text-gray-600">
+                        Add redirect URIs in Google Cloud Console:
+                    </p>
+                    <ul class="text-xs text-gray-500 mt-1 space-y-1">
+                        <li>• Your Cloud Run URL + /auth/google/callback</li>
+                        <li>• https://intisor.github.io/gdrive-mcp/</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-sitemap text-gray-600 mr-3"></i>
+                Architecture
+            </h3>
+            <div class="flex items-center justify-center space-x-6 py-8">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                        <i class="fab fa-github text-3xl text-blue-600"></i>
+                    </div>
+                    <p class="text-sm font-semibold">GitHub Pages</p>
+                    <p class="text-xs text-gray-500">Frontend (FREE)</p>
+                </div>
+                <div class="flex-1 h-px bg-gray-300 relative">
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500">
+                        HTTPS
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center mb-2">
+                        <i class="fas fa-cloud text-3xl text-green-600"></i>
+                    </div>
+                    <p class="text-sm font-semibold">Cloud Run</p>
+                    <p class="text-xs text-gray-500">Backend (FREE)</p>
+                </div>
+                <div class="flex-1 h-px bg-gray-300 relative">
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500">
+                        MCP
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-yellow-100 rounded-lg flex items-center justify-center mb-2">
+                        <i class="fab fa-google-drive text-3xl text-yellow-600"></i>
+                    </div>
+                    <p class="text-sm font-semibold">Google Drive</p>
+                    <p class="text-xs text-gray-500">API</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="max-w-4xl mx-auto text-center px-4">
+            <div class="grid md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <h4 class="font-semibold mb-2">Links</h4>
+                    <div class="space-y-1 text-sm">
+                        <a href="https://github.com/intisor/gdrive-mcp" class="block text-blue-400 hover:text-blue-300 transition duration-200">
+                            <i class="fab fa-github mr-1"></i>GitHub Repository
+                        </a>
+                        <a href="CLOUD-DEPLOYMENT.md" class="block text-blue-400 hover:text-blue-300 transition duration-200">
+                            <i class="fas fa-book mr-1"></i>Deployment Guide
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2">Status</h4>
+                    <div class="space-y-1 text-sm">
+                        <div id="footerStatus" class="flex items-center justify-center">
+                            <span class="status-indicator status-offline"></span>
+                            <span>Backend: Not connected</span>
+                        </div>
+                        <div class="text-gray-400">Frontend: GitHub Pages</div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2">Cost</h4>
+                    <div class="text-sm text-green-400">
+                        <div>💰 $0.00/month</div>
+                        <div class="text-xs text-gray-400">Within free tiers</div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-gray-400 text-sm border-t border-gray-700 pt-4">
+                Powered by Google Cloud Run + GitHub Pages • Model Context Protocol (MCP)
+            </p>
+        </div>
+    </footer>
 
     <script>
         let apiEndpoint = '';
         let isConnected = false;
 
         function connectToAPI() {
-            const endpoint = document.getElementById('apiEndpoint').value;
+            const endpoint = document.getElementById('apiEndpoint').value.trim();
             if (!endpoint) {
-                alert('Please enter your API endpoint');
+                alert('Please enter your Cloud Run service URL');
                 return;
             }
             
-            apiEndpoint = endpoint;
-            localStorage.setItem('mcp-api-endpoint', endpoint);
+            // Clean up endpoint URL
+            apiEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint;
+            localStorage.setItem('mcp-api-endpoint', apiEndpoint);
+            
+            updateConnectionStatus('Connecting...', false);
             
             // Test connection
-            fetch(endpoint + '/api/health')
-                .then(response => response.json())
-                .then(data => {
-                    isConnected = true;
-                    updateConnectionStatus('Connected to ' + endpoint, true);
-                    enableChat();
-                })
-                .catch(error => {
-                    isConnected = false;
-                    updateConnectionStatus('Failed to connect', false);
-                    console.error('Connection failed:', error);
-                });
-        }
-
-        function updateConnectionStatus(message, connected) {
-            const statusEl = document.getElementById('connectionStatus');
-            statusEl.innerHTML = `
-                <span class="status-indicator status-${connected ? 'online' : 'offline'}"></span>
-                ${message}
-            `;
-        }
-
-        function enableChat() {
-            document.getElementById('messageInput').disabled = false;
-            document.querySelector('button[onclick="sendMessage()"]').disabled = false;
-            addMessage('system', 'Connected! You can now chat with your Google Drive assistant.');
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            if (!message || !isConnected) return;
-
-            addMessage('user', message);
-            input.value = '';
-
-            // Send to API
-            fetch(apiEndpoint + '/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, userId: 'web-user' })
+            fetch(apiEndpoint + '/api/health', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                addMessage('assistant', data.content);
+                isConnected = true;
+                const hostname = new URL(apiEndpoint).hostname;
+                updateConnectionStatus(`Connected to ${hostname}`, true);
+                enableApp(data);
+                showSuccessMessage('✅ Backend connected successfully!');
             })
             .catch(error => {
-                addMessage('error', 'Error: ' + error.message);
+                isConnected = false;
+                updateConnectionStatus('Connection failed', false);
+                console.error('Connection failed:', error);
+                showErrorMessage(`❌ Connection failed: ${error.message}`);
             });
         }
 
-        function quickAction(action) {
-            if (!isConnected) {
-                alert('Please connect to your backend API first');
-                return;
-            }
-            document.getElementById('messageInput').value = action;
-            sendMessage();
-        }
-
-        function addMessage(role, content) {
-            const messagesEl = document.getElementById('chatMessages');
-            const messageEl = document.createElement('div');
-            messageEl.className = `mb-2 ${role}`;
-            
-            let icon = '';
-            let className = '';
-            switch(role) {
-                case 'user': icon = 'fas fa-user'; className = 'text-primary'; break;
-                case 'assistant': icon = 'fas fa-robot'; className = 'text-success'; break;
-                case 'system': icon = 'fas fa-info-circle'; className = 'text-info'; break;
-                case 'error': icon = 'fas fa-exclamation-triangle'; className = 'text-danger'; break;
-            }
-            
-            messageEl.innerHTML = `
-                <div class="${className}">
-                    <i class="${icon}"></i> <strong>${role.charAt(0).toUpperCase() + role.slice(1)}:</strong>
-                </div>
-                <div class="ms-3">${content}</div>
+        function updateConnectionStatus(message, connected) {
+            // Update main status
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.innerHTML = `
+                <span class="status-indicator status-${connected ? 'online' : 'offline'}"></span>
+                <span class="text-sm">${message}</span>
             `;
             
-            messagesEl.appendChild(messageEl);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
+            // Update footer status
+            const footerStatus = document.getElementById('footerStatus');
+            footerStatus.innerHTML = `
+                <span class="status-indicator status-${connected ? 'online' : 'offline'}"></span>
+                <span>Backend: ${message}</span>
+            `;
         }
 
-        // Load saved endpoint
+        function enableApp(healthData) {
+            const buttons = document.getElementById('appButtons');
+            const message = document.getElementById('connectionMessage');
+            const testButtons = document.querySelectorAll('button[onclick^="test"]');
+            
+            // Enable app buttons
+            buttons.classList.remove('opacity-50');
+            buttons.querySelectorAll('a').forEach(link => {
+                link.classList.remove('cursor-not-allowed');
+                // Add backend parameter to URLs
+                const href = link.getAttribute('href');
+                const separator = href.includes('?') ? '&' : '?';
+                link.href = href + separator + 'backend=' + encodeURIComponent(apiEndpoint);
+            });
+            
+            // Update connection message
+            message.innerHTML = `
+                <i class="fas fa-check-circle mr-1"></i>
+                <span class="text-green-600">Backend connected! You can now use the app</span>
+            `;
+            
+            // Enable test buttons
+            testButtons.forEach(btn => btn.disabled = false);
+            
+            // Show health data if available
+            if (healthData) {
+                showTestResult('health', healthData);
+            }
+        }
+
+        function testHealth() {
+            if (!isConnected) {
+                showErrorMessage('Connect to backend first');
+                return;
+            }
+            
+            fetch(apiEndpoint + '/api/health')
+                .then(response => response.json())
+                .then(data => {
+                    showTestResult('health', data);
+                })
+                .catch(error => {
+                    showTestResult('health', { error: error.message });
+                });
+        }
+
+        function testAuth() {
+            if (!isConnected) {
+                showErrorMessage('Connect to backend first');
+                return;
+            }
+            
+            // Test OAuth endpoint
+            fetch(apiEndpoint + '/auth/google', { method: 'HEAD' })
+                .then(response => {
+                    const result = {
+                        status: response.status,
+                        oauth_endpoint: response.status < 400 ? '✅ Available' : '❌ Error',
+                        redirect_check: 'OAuth redirect configured'
+                    };
+                    showTestResult('auth', result);
+                })
+                .catch(error => {
+                    showTestResult('auth', { error: error.message });
+                });
+        }
+
+        function showTestResult(type, data) {
+            const resultsEl = document.getElementById('testResults');
+            resultsEl.innerHTML = `
+                <div class="font-semibold text-gray-700 mb-2">${type.toUpperCase()} Test Results:</div>
+                <pre class="text-xs overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>
+            `;
+            resultsEl.classList.remove('hidden');
+        }
+
+        function showSuccessMessage(message) {
+            // Create temporary success message
+            const div = document.createElement('div');
+            div.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+            div.textContent = message;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        function showErrorMessage(message) {
+            // Create temporary error message
+            const div = document.createElement('div');
+            div.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+            div.textContent = message;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 5000);
+        }
+
+        // Load saved endpoint on page load
         window.onload = function() {
             const saved = localStorage.getItem('mcp-api-endpoint');
             if (saved) {
                 document.getElementById('apiEndpoint').value = saved;
+                // Auto-connect if we have a saved endpoint
+                setTimeout(() => connectToAPI(), 1000);
             }
         };
 
-        // Enter key support
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+        // Enter key support for endpoint input
+        document.getElementById('apiEndpoint').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                sendMessage();
+                connectToAPI();
             }
         });
     </script>
