@@ -10,7 +10,8 @@ import { createServer } from 'http';
 import cookieParser from 'cookie-parser';
 
 import DirectGDriveService from './direct-gdrive-service.js';
-import SimpleChatService from './simple-chat-service.js';
+import HybridChatService from './hybrid-chat-service.js';
+import MCPGDriveClient from './mcp-client.js';
 import passport, { verifyToken, generateToken, getUserById } from './auth.js';
 
 // Load environment variables
@@ -37,7 +38,8 @@ const PORT = process.env.PORT || 3000;
 
 // Initialize services
 const driveService = new DirectGDriveService();
-const chatService = new SimpleChatService();
+const mcpClient = new MCPGDriveClient();
+const chatService = new HybridChatService();
 
 // Middleware
 app.use(cors({
@@ -82,22 +84,52 @@ const upload = multer({ storage: storage });
 // Initialize services
 async function initializeServices() {
   try {
-    console.log('🔄 Initializing Google Drive service...');
-    const connected = await driveService.initialize();
-    if (connected) {
-      console.log('✅ Google Drive service connected successfully');
-      await chatService.initialize(driveService);
-      console.log('✅ Chat service initialized with Drive support');
-    } else {
-      console.log('⚠️ Google Drive service connection failed');
-      await chatService.initialize(null);
-      console.log('✅ Chat service initialized in fallback mode');
-    }
-  } catch (error) {
-    console.error('❌ Error initializing services:', error.message);
-    console.log('⚠️ Continuing in fallback mode...');
+    console.log('🔄 Initializing services...');
+    
+    // Try to initialize both MCP and Direct API
+    let mcpConnected = false;
+    let driveConnected = false;
+    
+    // Initialize MCP first
     try {
-      await chatService.initialize(null);
+      console.log('🔄 Attempting MCP connection...');
+      mcpConnected = await mcpClient.connect();
+      if (mcpConnected) {
+        console.log('✅ MCP GDrive server connected successfully');
+      } else {
+        console.log('⚠️ MCP GDrive server connection failed');
+      }
+    } catch (mcpError) {
+      console.error('❌ MCP initialization error:', mcpError.message);
+    }
+    
+    // Initialize Direct API
+    try {
+      console.log('🔄 Initializing Direct Google Drive API...');
+      driveConnected = await driveService.initialize();
+      if (driveConnected) {
+        console.log('✅ Direct Google Drive API connected successfully');
+      } else {
+        console.log('⚠️ Direct Google Drive API connection failed');
+      }
+    } catch (driveError) {
+      console.error('❌ Direct API initialization error:', driveError.message);
+    }
+    
+    // Initialize chat service with both backends
+    if (mcpConnected || driveConnected) {
+      await chatService.initialize(driveService, mcpClient);
+      console.log(`✅ Hybrid chat service initialized (MCP: ${mcpConnected}, Direct: ${driveConnected})`);
+    } else {
+      console.log('⚠️ No working backends available - chat in limited mode');
+      await chatService.initialize(null, null);
+    }
+    
+  } catch (error) {
+    console.error('❌ Service initialization error:', error.message);
+    console.log('⚠️ Continuing with limited functionality...');
+    try {
+      await chatService.initialize(null, null);
       console.log('✅ Chat service initialized in fallback mode');
     } catch (fallbackError) {
       console.error('❌ Fallback initialization failed:', fallbackError.message);
@@ -154,6 +186,7 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    mcpConnected: mcpClient.isConnected,
     driveConnected: driveService.isConnected,
     environment: process.env.NODE_ENV || 'development'
   });
@@ -189,6 +222,7 @@ app.post('/api/chat/message', verifyToken, async (req, res) => {
 app.get('/api/health', verifyToken, (req, res) => {
   res.json({ 
     status: 'ok', 
+    mcpConnected: mcpClient.isConnected,
     driveConnected: driveService.isConnected,
     user: req.user.email,
     timestamp: new Date().toISOString()
