@@ -1,8 +1,8 @@
-import MCPGDriveClient from './mcp-client.js';
+import DirectGDriveService from './direct-gdrive-service.js';
 
 class ChatService {
   constructor() {
-    this.mcpClient = null;
+    this.driveService = null;
     this.conversationHistory = new Map(); // userId -> messages[]
     this.quickPrompts = [
       {
@@ -36,8 +36,8 @@ class ChatService {
     ];
   }
 
-  async initialize(mcpClient) {
-    this.mcpClient = mcpClient;
+  async initialize(driveService) {
+    this.driveService = driveService;
   }
 
   getQuickPrompts() {

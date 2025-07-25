@@ -9,8 +9,8 @@ import { Server } from 'socket.io';
 import { createServer } from 'http';
 import cookieParser from 'cookie-parser';
 
-import MCPGDriveClient from './mcp-client.js';
-import ChatService from './chat-service.js';
+import DirectGDriveService from './direct-gdrive-service.js';
+import SimpleChatService from './simple-chat-service.js';
 import passport, { verifyToken, generateToken, getUserById } from './auth.js';
 
 // Load environment variables
@@ -36,8 +36,8 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 // Initialize services
-const mcpClient = new MCPGDriveClient();
-const chatService = new ChatService();
+const driveService = new DirectGDriveService();
+const chatService = new SimpleChatService();
 
 // Middleware
 app.use(cors({
@@ -79,28 +79,28 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Initialize MCP connection on server start
-async function initializeMCP() {
+// Initialize services
+async function initializeServices() {
   try {
-    console.log('🔄 Initializing MCP connection...');
-    const connected = await mcpClient.connect();
+    console.log('🔄 Initializing Google Drive service...');
+    const connected = await driveService.initialize();
     if (connected) {
-      console.log('✅ MCP GDrive server connected successfully');
-      await chatService.initialize(mcpClient);
-      console.log('✅ Chat service initialized with MCP support');
+      console.log('✅ Google Drive service connected successfully');
+      await chatService.initialize(driveService);
+      console.log('✅ Chat service initialized with Drive support');
     } else {
-      console.log('⚠️ MCP GDrive server connection failed - running in fallback mode');
-      await chatService.initialize(null); // Initialize without MCP
+      console.log('⚠️ Google Drive service connection failed');
+      await chatService.initialize(null);
       console.log('✅ Chat service initialized in fallback mode');
     }
   } catch (error) {
-    console.error('❌ Error initializing MCP:', error.message);
+    console.error('❌ Error initializing services:', error.message);
     console.log('⚠️ Continuing in fallback mode...');
     try {
-      await chatService.initialize(null); // Initialize without MCP
+      await chatService.initialize(null);
       console.log('✅ Chat service initialized in fallback mode');
     } catch (fallbackError) {
-      console.error('❌ Failed to initialize chat service:', fallbackError);
+      console.error('❌ Fallback initialization failed:', fallbackError.message);
     }
   }
 }
@@ -154,7 +154,7 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    mcpConnected: mcpClient.isConnected(),
+    driveConnected: driveService.isConnected,
     environment: process.env.NODE_ENV || 'development'
   });
 });
@@ -189,7 +189,7 @@ app.post('/api/chat/message', verifyToken, async (req, res) => {
 app.get('/api/health', verifyToken, (req, res) => {
   res.json({ 
     status: 'ok', 
-    mcpConnected: mcpClient.isConnected,
+    driveConnected: driveService.isConnected,
     user: req.user.email,
     timestamp: new Date().toISOString()
   });
@@ -199,7 +199,7 @@ app.get('/api/health', verifyToken, (req, res) => {
 app.get('/api/files', verifyToken, async (req, res) => {
   try {
     const { folderId = 'root', maxResults = 10 } = req.query;
-    const result = await mcpClient.listFiles(folderId, parseInt(maxResults));
+    const result = await driveService.listFiles(folderId, parseInt(maxResults));
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -213,7 +213,9 @@ app.get('/api/search', verifyToken, async (req, res) => {
     if (!query) {
       return res.status(400).json({ error: 'Query parameter is required' });
     }
-    const result = await mcpClient.searchFiles(query, parseInt(maxResults));
+    
+    const searchQuery = `name contains '${query}' and trashed=false`;
+    const result = await driveService.searchFiles(searchQuery, parseInt(maxResults));
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -228,10 +230,11 @@ app.post('/api/upload', verifyToken, upload.single('file'), async (req, res) => 
     }
 
     const { parentFolderId = 'root' } = req.body;
-    const result = await mcpClient.uploadFile(
-      req.file.path,
+    const result = await driveService.uploadFile(
       req.file.originalname,
-      parentFolderId
+      req.file.buffer,
+      parentFolderId,
+      req.file.mimetype
     );
     
     res.json(result);
@@ -244,9 +247,7 @@ app.post('/api/upload', verifyToken, upload.single('file'), async (req, res) => 
 app.get('/api/download/:fileId', verifyToken, async (req, res) => {
   try {
     const { fileId } = req.params;
-    const downloadPath = `downloads/${fileId}`;
-    
-    const result = await mcpClient.downloadFile(fileId, downloadPath);
+    const result = await driveService.downloadFile(fileId);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -261,7 +262,7 @@ app.post('/api/folders', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'Folder name is required' });
     }
 
-    const result = await mcpClient.createFolder(folderName, parentFolderId);
+    const result = await driveService.createFolder(folderName, parentFolderId);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -272,7 +273,7 @@ app.post('/api/folders', verifyToken, async (req, res) => {
 app.delete('/api/files/:fileId', verifyToken, async (req, res) => {
   try {
     const { fileId } = req.params;
-    const result = await mcpClient.deleteFile(fileId);
+    const result = await driveService.deleteFile(fileId);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -315,7 +316,7 @@ io.on('connection', (socket) => {
   socket.on('chat_message', async (data) => {
     try {
       const { message, userId } = data;
-      const response = await chatService.processMessage(userId, message);
+      const response = await chatService.processMessage(message, userId);
       
       // Send response back to the user
       socket.emit('chat_response', {
@@ -335,7 +336,7 @@ io.on('connection', (socket) => {
 // Start server
 server.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  await initializeMCP();
+  await initializeServices();
 });
 
 // Error handling middleware
