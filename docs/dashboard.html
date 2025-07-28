@@ -56,6 +56,14 @@
                     </div>
                 </div>
 
+                <!-- MCP Tools Status -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">MCP Tools</h3>
+                    <div id="mcpToolsContainer" class="space-y-2">
+                        <div class="text-xs text-gray-500">Loading MCP tools...</div>
+                    </div>
+                </div>
+
                 <!-- Chat Messages -->
                 <div class="flex-1 flex flex-col">
                     <div id="chatMessages" class="flex-1 overflow-y-auto space-y-4 mb-4 max-h-96">
@@ -207,6 +215,7 @@
                 this.bindEvents();
                 this.initializeSocket();
                 this.loadQuickPrompts();
+                this.loadMCPTools();
                 this.checkServerStatus();
                 this.loadFiles();
             }
@@ -291,6 +300,66 @@
                     `).join('');
                 } catch (error) {
                     console.error('Failed to load quick prompts:', error);
+                }
+            }
+
+            async loadMCPTools() {
+                try {
+                    const response = await fetch(this.backendURL + '/api/mcp/tools', {
+                        credentials: 'include'
+                    });
+                    const data = await response.json();
+                    
+                    const mcpContainer = document.getElementById('mcpToolsContainer');
+                    
+                    if (data.error || !data.tools || data.tools.length === 0) {
+                        mcpContainer.innerHTML = `
+                            <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600 text-sm"></i>
+                                    <div class="text-xs text-yellow-800">
+                                        <div class="font-medium">MCP Disconnected</div>
+                                        <div class="text-yellow-600">${data.error || 'No MCP tools available'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    mcpContainer.innerHTML = `
+                        <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <i class="fas fa-check-circle text-green-600 text-sm"></i>
+                                <div class="text-xs font-medium text-green-800">MCP Connected</div>
+                            </div>
+                            <div class="text-xs text-green-700">
+                                ${data.tools.length} tools available:
+                            </div>
+                            <div class="mt-2 space-y-1">
+                                ${data.tools.map(tool => `
+                                    <div class="text-xs text-green-600 flex items-center">
+                                        <i class="fas fa-tools mr-1"></i>
+                                        <span class="font-mono">${tool.name}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Failed to load MCP tools:', error);
+                    const mcpContainer = document.getElementById('mcpToolsContainer');
+                    mcpContainer.innerHTML = `
+                        <div class="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-times-circle text-red-600 text-sm"></i>
+                                <div class="text-xs text-red-800">
+                                    <div class="font-medium">MCP Error</div>
+                                    <div class="text-red-600">${error.message}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 }
             }
 

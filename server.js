@@ -10,7 +10,7 @@ import { createServer } from 'http';
 import cookieParser from 'cookie-parser';
 
 import DirectGDriveService from './direct-gdrive-service.js';
-import HybridChatService from './hybrid-chat-service.js';
+import MCPOnlyChatService from './mcp-only-chat-service.js';
 import SimpleMCPGDriveClient from './simple-mcp-client.js';
 import passport, { verifyToken, generateToken, getUserById } from './auth.js';
 
@@ -40,7 +40,7 @@ const PORT = process.env.PORT || 3000;
 // Initialize services
 const driveService = new DirectGDriveService();
 const mcpClient = new SimpleMCPGDriveClient();
-const chatService = new HybridChatService();
+const chatService = new MCPOnlyChatService(mcpClient);
 
 // Middleware
 app.use(cors({
@@ -118,24 +118,12 @@ async function initializeServices() {
       console.error('❌ Direct API initialization error:', driveError.message);
     }
     
-    // Initialize chat service with both backends
-    if (mcpConnected || driveConnected) {
-      await chatService.initialize(driveService, mcpClient);
-      console.log(`✅ Hybrid chat service initialized (MCP: ${mcpConnected}, Direct: ${driveConnected})`);
-    } else {
-      console.log('⚠️ No working backends available - chat in limited mode');
-      await chatService.initialize(null, null);
-    }
+    // Chat service is already initialized with MCP client
+    console.log(`✅ MCP-only chat service initialized (MCP Connected: ${mcpConnected})`);
     
   } catch (error) {
     console.error('❌ Service initialization error:', error.message);
-    console.log('⚠️ Continuing with limited functionality...');
-    try {
-      await chatService.initialize(null, null);
-      console.log('✅ Chat service initialized in fallback mode');
-    } catch (fallbackError) {
-      console.error('❌ Fallback initialization failed:', fallbackError.message);
-    }
+    console.log('⚠️ Continuing with MCP-only functionality...');
   }
 }
 
@@ -197,6 +185,33 @@ app.get('/api/health', (req, res) => {
 // Chat Routes
 app.get('/api/chat/prompts', verifyToken, (req, res) => {
   res.json({ prompts: chatService.getQuickPrompts() });
+});
+
+// MCP Tools endpoint
+app.get('/api/mcp/tools', verifyToken, async (req, res) => {
+  try {
+    if (!mcpClient.isConnected) {
+      return res.json({ 
+        error: 'MCP client not connected',
+        tools: [],
+        connected: false 
+      });
+    }
+
+    const result = await mcpClient.client.listTools();
+    res.json({ 
+      tools: result.tools,
+      connected: true,
+      count: result.tools.length 
+    });
+  } catch (error) {
+    console.error('Error fetching MCP tools:', error);
+    res.json({ 
+      error: error.message,
+      tools: [],
+      connected: false 
+    });
+  }
 });
 
 app.get('/api/chat/history', verifyToken, (req, res) => {
