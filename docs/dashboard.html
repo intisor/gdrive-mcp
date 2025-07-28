@@ -295,7 +295,10 @@
             }
 
             sendQuickPrompt(prompt) {
-                this.sendChatMessage(prompt);
+                // Put the prompt text in the chat input instead of sending immediately
+                const input = document.getElementById('chatInput');
+                input.value = prompt;
+                input.focus();
             }
 
             bindEvents() {
