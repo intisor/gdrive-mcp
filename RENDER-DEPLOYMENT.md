@@ -1,6 +1,6 @@
 # Render.com Deployment Guide
 
-## 🚀 Deploy to Render (Free)
+## 🚀 Deploy to Render (Free) - Production Ready!
 
 ### Step 1: Sign up for Render
 1. Go to [render.com](https://render.com)
@@ -22,11 +22,16 @@ In the Render dashboard, go to Environment tab and add:
 
 ```
 NODE_ENV=production
-FRONTEND_URL=https://intisor.github.io
+FRONTEND_URL=https://intisor.github.io/gdrive-mcp
 SESSION_SECRET=your-random-secret-here
+JWT_SECRET=your-random-secret-here
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URI=https://your-app-name.onrender.com/auth/google/callback
+CLIENT_ID=your-google-client-id
+CLIENT_SECRET=your-google-client-secret
+GDRIVE_CREDS_DIR=/tmp
+PORT=3000
 ```
 
 **Note**: Replace `your-app-name` with your actual Render app name.
