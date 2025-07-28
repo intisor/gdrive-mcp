@@ -170,14 +170,14 @@ class MCPOnlyChatService {
       
       // Use MCP to search for June documents
       const searchResult = await this.mcpClient.client.callTool({
-        name: 'mcp__isaacphi_mcp_gdrive_search',
+        name: 'gdrive_search',
         arguments: {
           query: 'june'
         }
       });
 
       let response = `## 📄 June Documents Analysis (via MCP)\n\n`;
-      response += `🔧 **Using MCP Tool:** \`mcp__isaacphi_mcp_gdrive_search\`\n`;
+      response += `🔧 **Using MCP Tool:** \`gdrive_search\`\n`;
       response += `📋 **Search Query:** "june"\n\n`;
 
       if (!searchResult.content || !searchResult.content[0]) {
@@ -216,11 +216,11 @@ class MCPOnlyChatService {
 
       for (const doc of documentsToAnalyze) {
         try {
-          response += `🔧 **Reading file with MCP Tool:** \`mcp__isaacphi_mcp_gdrive_read_file\`\n`;
+          response += `🔧 **Reading file with MCP Tool:** \`gdrive_read_file\`\n`;
           
           // Read file content via MCP
           const contentResult = await this.mcpClient.client.callTool({
-            name: 'mcp__isaacphi_mcp_gdrive_read_file',
+            name: 'gdrive_read_file',
             arguments: {
               fileId: doc.id
             }
@@ -272,12 +272,12 @@ class MCPOnlyChatService {
       console.log('🔍 Getting recent files via MCP...');
       
       let response = `## 🕒 Recent Files (via MCP)\n\n`;
-      response += `🔧 **Using MCP Tool:** \`mcp__isaacphi_mcp_gdrive_search\`\n`;
+      response += `🔧 **Using MCP Tool:** \`gdrive_search\`\n`;
       response += `📋 **Query:** Recent files (default order)\n\n`;
       
       // Use MCP to search with orderBy recent
       const searchResult = await this.mcpClient.client.callTool({
-        name: 'mcp__isaacphi_mcp_gdrive_search',
+        name: 'gdrive_search',
         arguments: {
           query: '',
           pageSize: 10
@@ -330,12 +330,12 @@ class MCPOnlyChatService {
       console.log('🔍 Getting shared files via MCP...');
       
       let response = `## 🤝 Shared Files (via MCP)\n\n`;
-      response += `🔧 **Using MCP Tool:** \`mcp__isaacphi_mcp_gdrive_search\`\n`;
+      response += `🔧 **Using MCP Tool:** \`gdrive_search\`\n`;
       response += `📋 **Query:** Files shared with me\n\n`;
       
       // Search for files shared with me
       const searchResult = await this.mcpClient.client.callTool({
-        name: 'mcp__isaacphi_mcp_gdrive_search',
+        name: 'gdrive_search',
         arguments: {
           query: 'sharedWithMe'
         }
@@ -400,11 +400,11 @@ class MCPOnlyChatService {
       console.log(`🔍 Searching for "${searchTerm}" via MCP...`);
       
       let response = `## 🔍 Search Results for "${searchTerm}" (via MCP)\n\n`;
-      response += `🔧 **Using MCP Tool:** \`mcp__isaacphi_mcp_gdrive_search\`\n`;
+      response += `🔧 **Using MCP Tool:** \`gdrive_search\`\n`;
       response += `📋 **Search Query:** "${searchTerm}"\n\n`;
       
       const searchResult = await this.mcpClient.client.callTool({
-        name: 'mcp__isaacphi_mcp_gdrive_search',
+        name: 'gdrive_search',
         arguments: {
           query: searchTerm,
           pageSize: 20

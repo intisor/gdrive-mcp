@@ -241,7 +241,7 @@ app.get('/api/health', verifyToken, (req, res) => {
     status: 'ok', 
     mcpConnected: mcpClient.isConnected,
     driveConnected: driveService.isConnected,
-    user: req.user.email,
+    user: req.user?.email || req.user?.name || 'User',
     timestamp: new Date().toISOString()
   });
 });
