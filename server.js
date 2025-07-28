@@ -367,7 +367,7 @@ io.on('connection', (socket) => {
   socket.on('chat_message', async (data) => {
     try {
       const { message, userId } = data;
-      const response = await chatService.processMessage(message, userId);
+      const response = await chatService.processMessage(userId, message);
       
       // Send response back to the user
       socket.emit('chat_response', {

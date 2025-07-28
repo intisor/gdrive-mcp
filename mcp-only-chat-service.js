@@ -176,9 +176,13 @@ class MCPOnlyChatService {
         }
       });
 
+      let response = `## 📄 June Documents Analysis (via MCP)\n\n`;
+      response += `🔧 **Using MCP Tool:** \`mcp__isaacphi_mcp_gdrive_search\`\n`;
+      response += `📋 **Search Query:** "june"\n\n`;
+
       if (!searchResult.content || !searchResult.content[0]) {
         return {
-          content: `⚠️ No search results returned from MCP. The search may have failed or returned no matches.`,
+          content: response + `⚠️ No search results returned from MCP. The search may have failed or returned no matches.`,
           type: 'text'
         };
       }
@@ -195,7 +199,7 @@ class MCPOnlyChatService {
 
       if (juneDocuments.length === 0) {
         return {
-          content: `📭 **No June Documents Found**\n\n` +
+          content: response + `📭 **No June Documents Found**\n\n` +
                   `The MCP search didn't find any documents with "june" in the name.\n\n` +
                   `**Suggestions:**\n` +
                   `• Try searching for "report" or "2024"\n` +
@@ -205,14 +209,15 @@ class MCPOnlyChatService {
         };
       }
 
-      let response = `## 📄 June Documents Analysis (via MCP)\n\n` +
-                    `Found **${juneDocuments.length}** June documents.\n\n`;
+      response += `Found **${juneDocuments.length}** June documents.\n\n`;
 
       // Analyze up to 5 documents to avoid overwhelming the response
       const documentsToAnalyze = juneDocuments.slice(0, 5);
 
       for (const doc of documentsToAnalyze) {
         try {
+          response += `🔧 **Reading file with MCP Tool:** \`mcp__isaacphi_mcp_gdrive_read_file\`\n`;
+          
           // Read file content via MCP
           const contentResult = await this.mcpClient.client.callTool({
             name: 'mcp__isaacphi_mcp_gdrive_read_file',
@@ -243,7 +248,8 @@ class MCPOnlyChatService {
         response += `*...and ${juneDocuments.length - 5} more documents*\n\n`;
       }
 
-      response += `✅ **Analysis Complete** - All data retrieved via MCP tools`;
+      response += `✅ **Analysis Complete** - All data retrieved via MCP tools\n`;
+      response += `📊 **MCP Tools Used:** \`gdrive_search\`, \`gdrive_read_file\``;
 
       return {
         content: response,
@@ -265,6 +271,10 @@ class MCPOnlyChatService {
     try {
       console.log('🔍 Getting recent files via MCP...');
       
+      let response = `## 🕒 Recent Files (via MCP)\n\n`;
+      response += `🔧 **Using MCP Tool:** \`mcp__isaacphi_mcp_gdrive_search\`\n`;
+      response += `📋 **Query:** Recent files (default order)\n\n`;
+      
       // Use MCP to search with orderBy recent
       const searchResult = await this.mcpClient.client.callTool({
         name: 'mcp__isaacphi_mcp_gdrive_search',
@@ -276,7 +286,7 @@ class MCPOnlyChatService {
 
       if (!searchResult.content || !searchResult.content[0]) {
         return {
-          content: `⚠️ Unable to retrieve recent files via MCP.`,
+          content: response + `⚠️ Unable to retrieve recent files via MCP.`,
           type: 'text'
         };
       }
@@ -286,20 +296,19 @@ class MCPOnlyChatService {
 
       if (files.length === 0) {
         return {
-          content: `📭 **No Recent Files Found**\n\nMCP search returned no results.`,
+          content: response + `📭 **No Recent Files Found**\n\nMCP search returned no results.`,
           type: 'text'
         };
       }
 
-      let response = `## 🕒 Recent Files (via MCP)\n\n`;
-      
       files.slice(0, 10).forEach((file, index) => {
         const modifiedTime = file.modifiedTime ? new Date(file.modifiedTime).toLocaleDateString() : 'Unknown';
         response += `${index + 1}. **${file.name}**\n`;
         response += `   Type: ${this.getMimeTypeDisplayName(file.mimeType)} | Modified: ${modifiedTime}\n\n`;
       });
 
-      response += `✅ **Retrieved via MCP tools**`;
+      response += `✅ **Retrieved via MCP tools**\n`;
+      response += `📊 **MCP Tool Used:** \`gdrive_search\``;
 
       return {
         content: response,
@@ -320,6 +329,10 @@ class MCPOnlyChatService {
     try {
       console.log('🔍 Getting shared files via MCP...');
       
+      let response = `## 🤝 Shared Files (via MCP)\n\n`;
+      response += `🔧 **Using MCP Tool:** \`mcp__isaacphi_mcp_gdrive_search\`\n`;
+      response += `📋 **Query:** Files shared with me\n\n`;
+      
       // Search for files shared with me
       const searchResult = await this.mcpClient.client.callTool({
         name: 'mcp__isaacphi_mcp_gdrive_search',
@@ -330,7 +343,7 @@ class MCPOnlyChatService {
 
       if (!searchResult.content || !searchResult.content[0]) {
         return {
-          content: `⚠️ Unable to retrieve shared files via MCP.`,
+          content: response + `⚠️ Unable to retrieve shared files via MCP.`,
           type: 'text'
         };
       }
@@ -338,8 +351,6 @@ class MCPOnlyChatService {
       const searchData = JSON.parse(searchResult.content[0].text);
       const files = searchData.files || [];
 
-      let response = `## 🤝 Shared Files (via MCP)\n\n`;
-      
       if (files.length === 0) {
         response += `📭 No files are currently shared with you.`;
       } else {
@@ -353,7 +364,8 @@ class MCPOnlyChatService {
         }
       }
 
-      response += `✅ **Retrieved via MCP tools**`;
+      response += `✅ **Retrieved via MCP tools**\n`;
+      response += `📊 **MCP Tool Used:** \`gdrive_search\``;
 
       return {
         content: response,
@@ -387,6 +399,10 @@ class MCPOnlyChatService {
     try {
       console.log(`🔍 Searching for "${searchTerm}" via MCP...`);
       
+      let response = `## 🔍 Search Results for "${searchTerm}" (via MCP)\n\n`;
+      response += `🔧 **Using MCP Tool:** \`mcp__isaacphi_mcp_gdrive_search\`\n`;
+      response += `📋 **Search Query:** "${searchTerm}"\n\n`;
+      
       const searchResult = await this.mcpClient.client.callTool({
         name: 'mcp__isaacphi_mcp_gdrive_search',
         arguments: {
@@ -397,15 +413,13 @@ class MCPOnlyChatService {
 
       if (!searchResult.content || !searchResult.content[0]) {
         return {
-          content: `⚠️ Search via MCP returned no results.`,
+          content: response + `⚠️ Search via MCP returned no results.`,
           type: 'text'
         };
       }
 
       const searchData = JSON.parse(searchResult.content[0].text);
       const files = searchData.files || [];
-
-      let response = `## 🔍 Search Results for "${searchTerm}" (via MCP)\n\n`;
 
       if (files.length === 0) {
         response += `📭 No files found matching "${searchTerm}".`;
@@ -422,7 +436,8 @@ class MCPOnlyChatService {
         }
       }
 
-      response += `✅ **Retrieved via MCP tools**`;
+      response += `✅ **Retrieved via MCP tools**\n`;
+      response += `📊 **MCP Tool Used:** \`gdrive_search\``;
 
       return {
         content: response,
