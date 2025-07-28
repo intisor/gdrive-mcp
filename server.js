@@ -11,7 +11,7 @@ import cookieParser from 'cookie-parser';
 
 import DirectGDriveService from './direct-gdrive-service.js';
 import HybridChatService from './hybrid-chat-service.js';
-import MCPGDriveClient from './mcp-client.js';
+import SimpleMCPGDriveClient from './simple-mcp-client.js';
 import passport, { verifyToken, generateToken, getUserById } from './auth.js';
 
 // Load environment variables
@@ -27,7 +27,8 @@ const io = new Server(server, {
     origin: [
       "http://localhost:3000",
       "https://intisor.github.io",
-      process.env.FRONTEND_URL || 'https://intisor.github.io'
+      "https://intisor.github.io/gdrive-mcp",
+      process.env.FRONTEND_URL || 'https://intisor.github.io/gdrive-mcp'
     ],
     methods: ["GET", "POST"],
     credentials: true
@@ -38,7 +39,7 @@ const PORT = process.env.PORT || 3000;
 
 // Initialize services
 const driveService = new DirectGDriveService();
-const mcpClient = new MCPGDriveClient();
+const mcpClient = new SimpleMCPGDriveClient();
 const chatService = new HybridChatService();
 
 // Middleware
@@ -46,7 +47,8 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'https://intisor.github.io',
-    process.env.FRONTEND_URL || 'https://intisor.github.io'
+    'https://intisor.github.io/gdrive-mcp',
+    process.env.FRONTEND_URL || 'https://intisor.github.io/gdrive-mcp'
   ],
   credentials: true
 }));

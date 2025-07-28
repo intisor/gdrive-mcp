@@ -1,5 +1,5 @@
 import DirectGDriveService from './direct-gdrive-service.js';
-import MCPGDriveClient from './mcp-client.js';
+import SimpleMCPGDriveClient from './simple-mcp-client.js';
 
 class HybridChatService {
   constructor() {
@@ -113,7 +113,7 @@ class HybridChatService {
     } catch (error) {
       console.error('Chat processing error:', error);
       const errorResponse = {
-        content: `Sorry, I encountered an error: ${error.message}\\n\\n**Backend:** ${this.useMCP ? 'MCP Client' : 'Direct API'}\\n**Error Details:** ${error.stack?.split('\\n')[0] || 'No additional details'}`,
+        content: `Sorry, I encountered an error: ${error.message}\n\n**Backend:** ${this.useMCP ? 'MCP Client' : 'Direct API'}\n**Error Details:** ${error.stack?.split('\n')[0] || 'No additional details'}`,
         type: 'error'
       };
       
@@ -172,10 +172,10 @@ class HybridChatService {
           };
         }
 
-        let response = `**Found ${files.length} June documents using MCP:**\\n\\n`;
+        let response = `**Found ${files.length} June documents using MCP:**\n\n`;
         files.forEach((file, index) => {
-          response += `${index + 1}. **${file.name}**\\n`;
-          response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\\n\\n`;
+          response += `${index + 1}. **${file.name}**\n`;
+          response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\n\n`;
         });
 
         return {
@@ -211,12 +211,12 @@ class HybridChatService {
         };
       }
 
-      let response = `**Your Recent Files (${files.length} found via MCP):**\\n\\n`;
+      let response = `**Your Recent Files (${files.length} found via MCP):**\n\n`;
       files.forEach((file, index) => {
         const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
         const icon = isFolder ? '📁' : '📄';
-        response += `${index + 1}. ${icon} **${file.name}**\\n`;
-        response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\\n\\n`;
+        response += `${index + 1}. ${icon} **${file.name}**\n`;
+        response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\n\n`;
       });
 
       return {
@@ -249,7 +249,7 @@ class HybridChatService {
     try {
       const response = await this.driveService.analyzeJuneDocuments();
       return {
-        content: response + '\\n\\n**(Using Direct Google Drive API)**',
+        content: response + '\n\n**(Using Direct Google Drive API)**',
         type: 'text'
       };
     } catch (error) {
@@ -274,16 +274,16 @@ class HybridChatService {
         };
       }
 
-      let response = `**Your Recent Files (${files.length} found via Direct API):**\\n\\n`;
+      let response = `**Your Recent Files (${files.length} found via Direct API):**\n\n`;
       files.forEach((file, index) => {
         const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
         const icon = isFolder ? '📁' : '📄';
-        response += `${index + 1}. ${icon} **${file.name}**\\n`;
-        response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\\n`;
+        response += `${index + 1}. ${icon} **${file.name}**\n`;
+        response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\n`;
         if (file.size) {
-          response += `   Size: ${this.formatFileSize(file.size)}\\n`;
+          response += `   Size: ${this.formatFileSize(file.size)}\n`;
         }
-        response += `\\n`;
+        response += `\n`;
       });
 
       return {
@@ -321,12 +321,12 @@ class HybridChatService {
         };
       }
 
-      let response = `**Search Results for "${searchTerm}" (${files.length} found):**\\n\\n`;
+      let response = `**Search Results for "${searchTerm}" (${files.length} found):**\n\n`;
       files.forEach((file, index) => {
         const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
         const icon = isFolder ? '📁' : '📄';
-        response += `${index + 1}. ${icon} **${file.name}**\\n`;
-        response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\\n\\n`;
+        response += `${index + 1}. ${icon} **${file.name}**\n`;
+        response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\n\n`;
       });
 
       return {
@@ -358,25 +358,25 @@ class HybridChatService {
       const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
       const regularFiles = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
 
-      let response = `**Your Google Drive (${files.length} items):**\\n\\n`;
+      let response = `**Your Google Drive (${files.length} items):**\n\n`;
       
       if (folders.length > 0) {
-        response += `**📁 Folders (${folders.length}):**\\n`;
+        response += `**📁 Folders (${folders.length}):**\n`;
         folders.forEach((folder, index) => {
-          response += `${index + 1}. **${folder.name}**\\n`;
+          response += `${index + 1}. **${folder.name}**\n`;
         });
-        response += `\\n`;
+        response += `\n`;
       }
 
       if (regularFiles.length > 0) {
-        response += `**📄 Files (${regularFiles.length}):**\\n`;
+        response += `**📄 Files (${regularFiles.length}):**\n`;
         regularFiles.slice(0, 10).forEach((file, index) => {
-          response += `${index + 1}. **${file.name}**\\n`;
-          response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\\n`;
+          response += `${index + 1}. **${file.name}**\n`;
+          response += `   Modified: ${new Date(file.modifiedTime).toLocaleDateString()}\n`;
         });
         
         if (regularFiles.length > 10) {
-          response += `\\n... and ${regularFiles.length - 10} more files\\n`;
+          response += `\n... and ${regularFiles.length - 10} more files\n`;
         }
       }
 

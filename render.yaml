@@ -9,8 +9,10 @@ services:
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
-        value: https://intisor.github.io
+        value: https://intisor.github.io/gdrive-mcp
       - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_SECRET
         generateValue: true
       - key: GOOGLE_CLIENT_ID
         sync: false
@@ -18,5 +20,13 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI
         sync: false
+      - key: CLIENT_ID
+        sync: false
+      - key: CLIENT_SECRET
+        sync: false
+      - key: GDRIVE_CREDS_DIR
+        value: /tmp
+      - key: PORT
+        value: 3000
     autoDeploy: true
     branch: main

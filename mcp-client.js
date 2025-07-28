@@ -34,7 +34,48 @@ class MCPGDriveClient {
 
   async connect() {
     try {
-      console.log('Connecting to MCP GDrive server...');
+      console.log('🔄 Connecting to MCP GDrive server...');
+      
+      // Check if MCP server package is installed
+      console.log('📦 Checking for @isaacphi/mcp-gdrive package...');
+      
+      // Check if npx can find the package
+      try {
+        const { spawn } = await import('child_process');
+        const testProcess = spawn('npx', ['@isaacphi/mcp-gdrive', '--version'], { 
+          stdio: 'pipe',
+          timeout: 5000 
+        });
+        
+        let hasOutput = false;
+        testProcess.stdout.on('data', (data) => {
+          hasOutput = true;
+          console.log('📦 MCP package found:', data.toString().trim());
+        });
+        
+        testProcess.stderr.on('data', (data) => {
+          console.log('📦 MCP package check stderr:', data.toString().trim());
+        });
+        
+        await new Promise((resolve, reject) => {
+          testProcess.on('close', (code) => {
+            if (code === 0 || hasOutput) {
+              console.log('✅ @isaacphi/mcp-gdrive package is available');
+            } else {
+              console.log('⚠️ @isaacphi/mcp-gdrive package not found or not working');
+              console.log('💡 Install with: npm install -g @isaacphi/mcp-gdrive');
+            }
+            resolve();
+          });
+          
+          testProcess.on('error', (err) => {
+            console.log('⚠️ Could not check MCP package:', err.message);
+            resolve(); // Continue anyway
+          });
+        });
+      } catch (checkError) {
+        console.log('⚠️ Package check failed:', checkError.message);
+      }
       
       // Try multiple command variations for Windows compatibility
       const commands = [
@@ -46,6 +87,8 @@ class MCPGDriveClient {
 
       // Also try direct node execution if we can find the script
       const mcpPaths = this.findMCPServerPaths();
+      console.log(`🔍 Found ${mcpPaths.length} potential MCP server paths:`, mcpPaths);
+      
       if (mcpPaths.length > 0) {
         mcpPaths.forEach(path => {
           commands.unshift({ command: 'node', args: [path] });
@@ -56,7 +99,14 @@ class MCPGDriveClient {
       
       for (const cmdConfig of commands) {
         try {
-          console.log(`Trying command: ${cmdConfig.command} ${cmdConfig.args.join(' ')}`);
+          console.log(`🔄 Trying command: ${cmdConfig.command} ${cmdConfig.args.join(' ')}`);
+          
+          // Check environment variables
+          const requiredEnvs = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
+          const missingEnvs = requiredEnvs.filter(env => !process.env[env]);
+          if (missingEnvs.length > 0) {
+            console.log(`⚠️ Missing environment variables: ${missingEnvs.join(', ')}`);
+          }
           
           this.transport = new StdioClientTransport({
             command: cmdConfig.command,
@@ -79,6 +129,7 @@ class MCPGDriveClient {
             }
           });
 
+          console.log('🔗 Attempting to connect to MCP server...');
           // Connect to the server
           await this.client.connect(this.transport);
           this.isConnected = true;
@@ -87,22 +138,34 @@ class MCPGDriveClient {
           
           // List available tools
           try {
+            console.log('📋 Listing available MCP tools...');
             const tools = await this.client.listTools();
-            console.log('Available tools:', tools.tools.map(t => t.name));
+            console.log(`✅ Available tools (${tools.tools.length}):`, tools.tools.map(t => t.name));
             return true;
           } catch (err) {
-            console.log('Could not list tools:', err.message);
+            console.log(`⚠️ Could not list tools: ${err.message}`);
+            console.log('🔧 Connection established but tools unavailable');
             return false;
           }
           
         } catch (cmdError) {
-          console.log(`Failed with ${cmdConfig.command}:`, cmdError.message);
+          console.log(`❌ Failed with ${cmdConfig.command}: ${cmdError.message}`);
+          console.log(`📝 Error details:`, cmdError.code || 'Unknown error code');
           lastError = cmdError;
           continue;
         }
       }
       
       // If all commands failed, throw the last error
+      const errorMessage = lastError?.message || 'All connection methods failed';
+      console.log(`❌ All MCP connection attempts failed. Last error: ${errorMessage}`);
+      
+      // Check if the package is installed
+      console.log('💡 Troubleshooting tips:');
+      console.log('   1. Install MCP GDrive: npm install -g @isaacphi/mcp-gdrive');
+      console.log('   2. Check environment variables: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET');
+      console.log('   3. Verify Google Drive API is enabled in your project');
+      
       throw lastError || new Error('All connection methods failed');
       
     } catch (error) {
